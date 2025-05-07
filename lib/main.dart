@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:kite_mobile/api.dart';
-import 'package:kite_mobile/articles.dart';
 import 'package:kite_mobile/categories.dart';
 import 'package:kite_mobile/models.dart';
 import 'package:multiple_result/multiple_result.dart';
@@ -20,53 +19,38 @@ class KiteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => ActiveCategoryModel()),
-        FutureProvider<Result<List<Category>, Exception>>(
-          initialData: const Success([]),
-          create: (BuildContext context) async {
-            final activeCategoryModel = context.read<ActiveCategoryModel>();
-            final result = await api.loadCategories();
-            result.whenSuccess((categories) {
-              if (categories.isNotEmpty) {
-                activeCategoryModel.setActiveCategory(categories.first);
-              }
-            });
-            return result;
-          },
-        ),
-        ProxyProvider<
-          ActiveCategoryModel,
-          Future<Result<List<Article>, Exception>>
-        >(
-          update: (context, model, _) async {
-            final category = model.category;
-            if (category == null || category is! ArticleCategory) {
-              return const Success([]);
-            }
-            return api.loadArticles(category);
-          },
-        ),
+        ChangeNotifierProvider(create: (context) => CategoryListModel(api: api)),
+        ChangeNotifierProvider(create: (context) => ArticleListModel(api: api)),
       ],
-      child: Builder(
-        builder: (context) {
-          final categories = context.watch<Result<List<Category>, Exception>>();
-          return KiteDispatcher(categories: categories);
-        },
-      ),
+      child: KiteDispatcher(),
     );
   }
 }
 
-class KiteDispatcher extends StatelessWidget {
-  final Result<List<Category>, Exception> categories;
+class KiteDispatcher extends StatefulWidget {
 
-  const KiteDispatcher({super.key, required this.categories});
+  const KiteDispatcher({super.key});
+
+  @override
+  State<KiteDispatcher> createState() => _KiteDispatcherState();
+}
+
+class _KiteDispatcherState extends State<KiteDispatcher> {
+
+  @override
+  void initState() {
+    super.initState();
+    final model = context.read<CategoryListModel>();
+    model.fetch();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return switch (categories) {
+    final categories = context.watch<CategoryListModel>();
+    return switch (categories.list) {
       Success(success: final categoryList) => DefaultTabController(
         length: categoryList.length,
-        
+
         child: KiteMaterialApp(home: KiteHost(categories: categoryList)),
       ),
       Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed()),
@@ -123,45 +107,55 @@ class KiteHost extends StatelessWidget {
         isScrollable: true,
         labelPadding: EdgeInsets.only(left: 8, right: 8),
         onTap:
-            (value) => context.read<ActiveCategoryModel>().setActiveCategory(
+            (value) => context.read<CategoryListModel>().setActiveCategory(
               categories[value],
             ),
       ),
       body: TabBarView(
         children: [
-          for (final category in categories) ArticleList(category: category),
+          for (final category in categories) switch (category) {
+            ArticleCategory() => ArticleList(category: category),
+            OnThisDayCategory() => Center(child: Text('Coming soon.')),
+          },
         ],
       ),
     );
   }
 }
 
-class ArticleList extends StatelessWidget {
-  final Category category;
+class ArticleList extends StatefulWidget {
+  final ArticleCategory category;
 
   const ArticleList({super.key, required this.category});
 
   @override
+  State<ArticleList> createState() => _ArticleListState();
+}
+
+class _ArticleListState extends State<ArticleList> {
+  @override
+  void initState() {
+    super.initState();
+    final model = context.read<ArticleListModel>();
+    model.fetch(widget.category);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final future = context.watch<Future<Result<List<Article>, Exception>>>();
-    return FutureBuilder(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
-        }
-        final result = snapshot.data!;
-        return switch (result) {
-          Success(success: final articles) => Column(
+    final model = context.watch<ArticleListModel>();
+    final articles = model.get(widget.category);
+    if (articles == null) {
+      return Center(child: CircularProgressIndicator());
+    } else if (articles.isNotEmpty) {
+      return Column(
             children: [
-              Text(category.name),
+              Text(widget.category.name),
               for (final article in articles) Text(article.title),
             ],
-          ),
-          Error(error: final error) => Center(child: Text(error.toString())),
-        };
-      },
-    );
+          );
+    } else {
+      return Center(child: Text('No articles.'));
+    }
   }
 }
 
