@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kite_mobile/api.dart';
 import 'package:kite_mobile/articles.dart';
 import 'package:kite_mobile/categories.dart';
 import 'package:kite_mobile/models.dart';
@@ -6,11 +7,14 @@ import 'package:multiple_result/multiple_result.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const KiteApp());
+  final api = KiteApi();
+  runApp(KiteApp(api: api));
 }
 
 class KiteApp extends StatelessWidget {
-  const KiteApp({super.key});
+  final KiteApi api;
+  
+  const KiteApp({super.key, required this.api});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +25,7 @@ class KiteApp extends StatelessWidget {
           initialData: const Success([]),
           create: (BuildContext context) async {
             final activeCategoryModel = context.read<ActiveCategoryModel>();
-            final categories = HttpCategories(
-              kiteUrl: 'https://kite.kagi.com/kite.json',
-            );
-            final result = await categories.load();
+            final result = await api.loadCategories();
             result.whenSuccess((categories) {
               if (categories.isNotEmpty) {
                 activeCategoryModel.setActiveCategory(categories.first);
@@ -39,13 +40,10 @@ class KiteApp extends StatelessWidget {
         >(
           update: (context, model, _) async {
             final category = model.category;
-            if (category == null) {
+            if (category == null || category is! ArticleCategory) {
               return const Success([]);
             }
-            final articles = HttpArticles(
-              categoryUrl: 'https://kite.kagi.com/' + category.file,
-            );
-            return await articles.load();
+            return api.loadArticles(category);
           },
         ),
       ],
@@ -68,6 +66,7 @@ class KiteDispatcher extends StatelessWidget {
     return switch (categories) {
       Success(success: final categoryList) => DefaultTabController(
         length: categoryList.length,
+        
         child: KiteMaterialApp(home: KiteHost(categories: categoryList)),
       ),
       Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed()),
@@ -148,7 +147,7 @@ class ArticleList extends StatelessWidget {
     return FutureBuilder(
       future: future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
         final result = snapshot.data!;
