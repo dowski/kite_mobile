@@ -12,14 +12,16 @@ void main() {
 
 class KiteApp extends StatelessWidget {
   final KiteApi api;
-  
+
   const KiteApp({super.key, required this.api});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => CategoryListModel(api: api)),
+        ChangeNotifierProvider(
+          create: (context) => CategoryListModel(api: api),
+        ),
         ChangeNotifierProvider(create: (context) => ArticleListModel(api: api)),
       ],
       child: KiteDispatcher(),
@@ -28,7 +30,6 @@ class KiteApp extends StatelessWidget {
 }
 
 class KiteDispatcher extends StatefulWidget {
-
   const KiteDispatcher({super.key});
 
   @override
@@ -36,7 +37,6 @@ class KiteDispatcher extends StatefulWidget {
 }
 
 class _KiteDispatcherState extends State<KiteDispatcher> {
-
   @override
   void initState() {
     super.initState();
@@ -71,6 +71,9 @@ class KiteMaterialApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
       ),
       home: home,
+      routes: {
+        '/article': (context) => Scaffold(body: Center(child: Text('Coming soon.'))),
+      },
     );
   }
 }
@@ -113,10 +116,11 @@ class KiteHost extends StatelessWidget {
       ),
       body: TabBarView(
         children: [
-          for (final category in categories) switch (category) {
-            ArticleCategory() => ArticleList(category: category),
-            OnThisDayCategory() => Center(child: Text('Coming soon.')),
-          },
+          for (final category in categories)
+            switch (category) {
+              ArticleCategory() => ArticleList(category: category),
+              OnThisDayCategory() => Center(child: Text('Coming soon.')),
+            },
         ],
       ),
     );
@@ -143,16 +147,18 @@ class _ArticleListState extends State<ArticleList> {
   @override
   Widget build(BuildContext context) {
     final model = context.watch<ArticleListModel>();
-    final articles = model.get(widget.category);
+    final articles = model.summaries(widget.category);
     if (articles == null) {
       return Center(child: CircularProgressIndicator());
     } else if (articles.isNotEmpty) {
-      return Column(
-            children: [
-              Text(widget.category.name),
-              for (final article in articles) Text(article.title),
-            ],
-          );
+      return ListView.builder(
+        itemCount: articles.length,
+        itemBuilder: (context, index) {
+          final article = articles[index];
+          final navigator = Navigator.of(context);
+          return ListTile(title: Text(article.title), subtitle: Text(article.category), onTap: () => navigator.pushNamed('/article'));
+        },
+      );
     } else {
       return Center(child: Text('No articles.'));
     }

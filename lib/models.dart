@@ -28,7 +28,7 @@ final class CategoryListModel extends ChangeNotifier {
 
 final class ArticleListModel extends ChangeNotifier {
   final KiteApi _api;
-  final Map<ArticleCategory, List<Article>> _articles = {};
+  final Map<ArticleCategory, List<ArticleSummary>> _articles = {};
 
   ArticleListModel({required KiteApi api}): _api = api;
 
@@ -43,5 +43,5 @@ final class ArticleListModel extends ChangeNotifier {
     });
   }
 
-  List<Article>? get(ArticleCategory category) => _articles[category];
+  List<ArticleSummary>? summaries(ArticleCategory category) => _articles[category];
 }

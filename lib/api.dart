@@ -48,13 +48,13 @@ class KiteApi {
     );
   }
 
-  Future<Result<List<Article>, Exception>> loadArticles(
+  Future<Result<List<ArticleSummary>, Exception>> loadArticles(
     ArticleCategory category,
   ) async {
     final result = await _rawFetch(Uri.https(_host, category.file));
     return result.mapSuccess((articlesJson) => (articlesJson['clusters'] as List<dynamic>)
         .map((item) => item as Map<String, dynamic>)
-        .map(Article.fromJson)
+        .map(ArticleSummary.fromJson)
         .nonNulls
         .toList());
   }
