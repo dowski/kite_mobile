@@ -9,6 +9,7 @@ const _defaultCategoryNames = [
   "Technology",
   "Science",
   "Sports",
+  //TODO(dowski): this category actually returns different data
   "OnThisDay",
 ];
 
@@ -16,6 +17,7 @@ abstract interface class Categories {
   Future<Result<List<Category>, Exception>> load();
 }
 
+//TODO(dowski): refactor into a KagiApi class
 final class HttpCategories implements Categories {
   final Uri _url;
 
