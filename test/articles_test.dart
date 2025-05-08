@@ -5,45 +5,66 @@ import 'package:kite_mobile/articles.dart';
 
 void main() {
   group('Article from JSON', () {
-    final article = Article.fromJson(jsonDecode(articleJson) as Map<String, dynamic>);
+    late Article article;
+
+    setUp(() {
+      article = Article.fromJson(jsonDecode(articleJsonString) as Map<String, dynamic>)!;
+    });
+
     test('has proper headline', () {
-      expect(article?.headline.title, 'Inter Milan triumphs in historic Champions League semi-final');
-      expect(article?.headline.category, 'Football');
+      expect(article.headline.title, 'Inter Milan triumphs in historic Champions League semi-final');
+      expect(article.headline.category, 'Football');
     });
 
     test('has proper location', () {
-      expect(article?.location, 'Milan, Italy');
+      expect(article.location, 'Milan, Italy');
     });
 
     test('has proper summary', () {
-      expect(article?.summary, 'Inter Milan has secured a place in the Champions League final after defeating Barcelona 4-3 in extra time (7-6 on aggregate) in an extraordinary semi-final match at San Siro. The thrilling contest featured remarkable comebacks from both sides, with substitute Davide Frattesi scoring the decisive goal in the 99th minute of extra time. This victory sends Inter to their second Champions League final in three years, where they will face either Arsenal or Paris Saint-Germain.');
+      expect(article.summary, 'Inter Milan has secured a place in the Champions League final after defeating Barcelona 4-3 in extra time (7-6 on aggregate) in an extraordinary semi-final match at San Siro. The thrilling contest featured remarkable comebacks from both sides, with substitute Davide Frattesi scoring the decisive goal in the 99th minute of extra time. This victory sends Inter to their second Champions League final in three years, where they will face either Arsenal or Paris Saint-Germain.');
     });
 
     test('has proper external articles', () {
-      expect(article?.externalArticles, hasLength(7));
+      expect(article.externalArticles, hasLength(7));
       // Unique properties.
-      expect(article?.externalArticles.map((article) => article.title).toSet(), hasLength(7));
-      expect(article?.externalArticles.map((article) => article.link).toSet(), hasLength(7));
+      expect(article.externalArticles.map((article) => article.title).toSet(), hasLength(7));
+      expect(article.externalArticles.map((article) => article.link).toSet(), hasLength(7));
     });
 
     test('has proper images', () {
-      expect(article?.image1, isNotNull);
-      expect(article?.image2, isNotNull);
-      expect(article?.image1, isNot(equals(article?.image2)));
+      expect(article.image1, isNotNull);
+      expect(article.image2, isNotNull);
+      expect(article.image1, isNot(equals(article.image2)));
     });
 
     test('has proper talking points', () {
-      expect(article?.talkingPoints, hasLength(5));
+      expect(article.talkingPoints, hasLength(5));
       // Unique properties.
-      expect(article?.talkingPoints.map((point) => point.heading).toSet(), hasLength(5));
-      expect(article?.talkingPoints.map((point) => point.body).toSet(), hasLength(5));
+      expect(article.talkingPoints.map((point) => point.heading).toSet(), hasLength(5));
+      expect(article.talkingPoints.map((point) => point.body).toSet(), hasLength(5));
       // No blank leading characters.
-      expect(article?.talkingPoints.every((point) => point.body.startsWith(' ')), isFalse);
+      expect(article.talkingPoints.every((point) => point.body.startsWith(' ')), isFalse);
+    });
+  });
+
+  group('Article without external articles', () {
+    late Article article;
+
+    setUp(() {
+      final articleJson = jsonDecode(articleJsonString) as Map<String, dynamic>;
+      // Simulate no external articles.
+      articleJson['articles'] = [];
+      article = Article.fromJson(articleJson)!;
+    });
+
+    test('has no images', () {
+      expect(article.image1, isNull);
+      expect(article.image2, isNull);
     });
   });
 }
 
-const articleJson = r'''
+const articleJsonString = r'''
 {
   "cluster_number": 1,
   "unique_domains": 5,

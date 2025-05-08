@@ -55,17 +55,21 @@ final class Article {
               .map(ExternalArticle.fromJson)
               .nonNulls
               .toList(),
-      talkingPoints: (json['talking_points'] as List<dynamic>)
-          .map((item) => item as String)
-          .map(TalkingPoint.fromString)
-          .nonNulls
-          .toList(),
+      talkingPoints:
+          (json['talking_points'] as List<dynamic>)
+              .map((item) => item as String)
+              .map(TalkingPoint.fromString)
+              .nonNulls
+              .toList(),
     );
   }
 
   ArticleImage? get image1 => ArticleImage.fromExternalOrNull(
-    externalArticles.where((article) => article.image != null).first,
+    externalArticles
+        .where((article) => article.image != null)
+        .elementAtOrNull(0),
   );
+  
   ArticleImage? get image2 => ArticleImage.fromExternalOrNull(
     externalArticles
         .where((article) => article.image != null)
