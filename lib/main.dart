@@ -222,7 +222,14 @@ class _KiteArticleState extends State<KiteArticle> {
   }
 
   Future<void> _loadImage1(ImageProvider image) async {
-    await precacheImage(image, context);
+    await precacheImage(
+      image,
+      context,
+      onError: (exception, stackTrace) {
+        // Purposely empty - we don't do anything with preload errors.
+      },
+    );
+
     setState(() {
       _isImage1Loading = false;
     });
@@ -237,68 +244,83 @@ class _KiteArticleState extends State<KiteArticle> {
             AnimatedOpacity(
               opacity: _isImage1Loading ? 0.0 : 1.0,
               duration: Durations.medium1,
-              child: ListView(
-                padding: EdgeInsets.all(16),
-                children: [
-                  IntrinsicHeight(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          color: colorFromText(widget.article.headline.category),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.article.headline.title,
-                                style: TextStyle(fontSize: 24),
-                              ),
-                              Text(
-                                widget.article.headline.category,
-                                style: TextStyle(
+              child:
+                  _isImage1Loading
+                      ? Container()
+                      : ListView(
+                        padding: EdgeInsets.all(16),
+                        children: [
+                          IntrinsicHeight(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
                                   color: colorFromText(
                                     widget.article.headline.category,
                                   ),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.article.headline.title,
+                                        style: TextStyle(fontSize: 24),
+                                      ),
+                                      Text(
+                                        widget.article.headline.category,
+                                        style: TextStyle(
+                                          color: colorFromText(
+                                            widget.article.headline.category,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(widget.article.summary, style: TextStyle(fontSize: 16)),
-                  if (widget.article.image1 != null) ...[
-                    SizedBox(height: 16),
-                    Image.network(widget.article.image1!.url.toString()),
-                    Text(widget.article.image1!.caption ?? ''),
-                  ],
-                  if (widget.article.talkingPoints.isNotEmpty) ...[
-                    SizedBox(height: 16),
-        
-                    TalkingPointsWidget(
-                      talkingPoints: widget.article.talkingPoints,
-                    ),
-                  ],
-                  if (widget.article.image2 != null) ...[
-                    SizedBox(height: 16),
-                    Image.network(widget.article.image2!.url.toString()),
-                    Text(widget.article.image2!.caption ?? ''),
-                  ],
-                  if (widget.article.externalArticles.isNotEmpty) ...[
-                    SizedBox(height: 16),
-        
-                    ExternalArticlesWidget(
-                      key: _externalArticleKey,
-                      articles: widget.article.externalArticles,
-                    )
-                  ],
-                ],
-              ),
+                          SizedBox(height: 16),
+                          Text(
+                            widget.article.summary,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          if (widget.article.image1 != null) ...[
+                            SizedBox(height: 16),
+                            Image.network(
+                              widget.article.image1!.url.toString(),
+                              errorBuilder:
+                                  (context, error, stackTrace) => Placeholder(),
+                            ),
+                            Text(widget.article.image1!.caption ?? ''),
+                          ],
+                          if (widget.article.talkingPoints.isNotEmpty) ...[
+                            SizedBox(height: 16),
+                            TalkingPointsWidget(
+                              talkingPoints: widget.article.talkingPoints,
+                            ),
+                          ],
+                          if (widget.article.image2 != null) ...[
+                            SizedBox(height: 16),
+                            Image.network(
+                              widget.article.image2!.url.toString(),
+                              errorBuilder:
+                                  (context, error, stackTrace) => Placeholder(),
+                            ),
+                            Text(widget.article.image2!.caption ?? ''),
+                          ],
+                          if (widget.article.externalArticles.isNotEmpty) ...[
+                            SizedBox(height: 16),
+                            ExternalArticlesWidget(
+                              key: _externalArticleKey,
+                              articles: widget.article.externalArticles,
+                            ),
+                          ],
+                        ],
+                      ),
             ),
             if (_isImage1Loading) Center(child: CircularProgressIndicator()),
           ],
@@ -347,7 +369,8 @@ class ExternalArticlesWidget extends StatelessWidget {
           ListTile(
             title: Text(article.title),
             subtitle: Text(article.domain),
-            onTap: () => launchUrl(article.link),)
+            onTap: () => launchUrl(article.link),
+          ),
         ],
       ],
     );
@@ -357,15 +380,22 @@ class ExternalArticlesWidget extends StatelessWidget {
 class KiteLoadFailed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return KiteScaffold(body: Center(child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('Error loading'),
-        IconButton.filled(onPressed: () {
-          context.read<CategoryListModel>().retry();
-        }, icon: Icon(Icons.refresh)),
-        Text('Check your internet connection and try again')
-      ],
-    )));
+    return KiteScaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error loading'),
+            IconButton.filled(
+              onPressed: () {
+                context.read<CategoryListModel>().retry();
+              },
+              icon: Icon(Icons.refresh),
+            ),
+            Text('Check your internet connection and try again'),
+          ],
+        ),
+      ),
+    );
   }
 }
