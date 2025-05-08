@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kite_mobile/api.dart';
+import 'package:kite_mobile/articles.dart';
 import 'package:kite_mobile/categories.dart';
 import 'package:kite_mobile/colors.dart';
 import 'package:kite_mobile/models.dart';
@@ -23,7 +24,7 @@ class KiteApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => CategoryListModel(api: api),
         ),
-        ChangeNotifierProvider(create: (context) => ArticleListModel(api: api)),
+        ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
       ],
       child: KiteDispatcher(),
     );
@@ -72,10 +73,7 @@ class KiteMaterialApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
       ),
       home: home,
-      routes: {
-        '/article':
-            (context) => Scaffold(body: Center(child: Text('Coming soon.'))),
-      },
+      routes: {'/article': (context) => KiteArticleHost()},
     );
   }
 }
@@ -83,15 +81,21 @@ class KiteMaterialApp extends StatelessWidget {
 class KiteScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? tabBar;
+  final String title;
 
-  const KiteScaffold({super.key, required this.body, this.tabBar});
+  const KiteScaffold({
+    super.key,
+    required this.body,
+    this.tabBar,
+    this.title = 'Kite',
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text('Kite'),
+        title: Text(title),
         bottom: tabBar,
       ),
       body: body,
@@ -142,38 +146,68 @@ class _ArticleListState extends State<ArticleList> {
   @override
   void initState() {
     super.initState();
-    final model = context.read<ArticleListModel>();
+    final model = context.read<ArticlesModel>();
     model.fetch(widget.category);
   }
 
   @override
   Widget build(BuildContext context) {
-    final model = context.watch<ArticleListModel>();
-    final articles = model.summaries(widget.category);
+    final model = context.watch<ArticlesModel>();
+    final articles = model.headlines(widget.category);
     if (articles == null) {
       return Center(child: CircularProgressIndicator());
     } else if (articles.isNotEmpty) {
       return ListView.builder(
         itemCount: articles.length,
         itemBuilder: (context, index) {
-          final article = articles[index];
+          final headline = articles[index];
           final navigator = Navigator.of(context);
           return ListTile(
-            title: Text(article.title),
+            title: Text(headline.title),
             contentPadding: EdgeInsets.all(4),
             horizontalTitleGap: 0,
-            leading: Container(width: 8, color: colorFromText(article.category), padding: EdgeInsets.zero,),
-            subtitle: Text(
-              article.category,
-              style: TextStyle(color: colorFromText(article.category)),
+            leading: Container(
+              width: 8,
+              color: colorFromText(headline.category),
+              padding: EdgeInsets.zero,
             ),
-            onTap: () => navigator.pushNamed('/article'),
+            subtitle: Text(
+              headline.category,
+              style: TextStyle(color: colorFromText(headline.category)),
+            ),
+            onTap: () {
+              model.selectArticle(headline);
+              navigator.pushNamed('/article');
+            },
           );
         },
       );
     } else {
       return Center(child: Text('No articles.'));
     }
+  }
+}
+
+class KiteArticleHost extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final model = context.watch<ArticlesModel>();
+    final article = model.selectedArticle!;
+    return KiteArticle(article: article);
+  }
+}
+
+class KiteArticle extends StatelessWidget {
+  final Article article;
+
+  const KiteArticle({super.key, required this.article});
+
+  @override
+  Widget build(BuildContext context) {
+    return KiteScaffold(
+      title: article.headline.title,
+      body: Center(child: Text(article.summary)),
+    );
   }
 }
 

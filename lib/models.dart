@@ -26,22 +26,30 @@ final class CategoryListModel extends ChangeNotifier {
   }
 }
 
-final class ArticleListModel extends ChangeNotifier {
+final class ArticlesModel extends ChangeNotifier {
   final KiteApi _api;
-  final Map<ArticleCategory, List<ArticleSummary>> _articles = {};
+  final Map<ArticleCategory, List<ArticleHeadline>> _headlines = {};
+  final Map<ArticleHeadline, Article> _articles = {};
+  Article? selectedArticle;
 
-  ArticleListModel({required KiteApi api}): _api = api;
+  ArticlesModel({required KiteApi api}): _api = api;
 
   Future<void> fetch(ArticleCategory category) async {
-    if (_articles.containsKey(category)) {
+    if (_headlines.containsKey(category)) {
       return;
     }
     final result = await _api.loadArticles(category);
     result.mapSuccess((articles) {
-      _articles[category] = articles;
+      _headlines[category] = articles.map((article) => article.headline).toList();
+      _articles.addEntries(articles.map((article) => MapEntry(article.headline, article)));
       notifyListeners();
     });
   }
 
-  List<ArticleSummary>? summaries(ArticleCategory category) => _articles[category];
+  List<ArticleHeadline>? headlines(ArticleCategory category) => _headlines[category];
+
+  void selectArticle(ArticleHeadline headline) {
+    selectedArticle = _articles[headline];
+    notifyListeners();
+  }
 }
