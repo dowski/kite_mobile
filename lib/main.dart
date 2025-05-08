@@ -197,16 +197,128 @@ class KiteArticleHost extends StatelessWidget {
   }
 }
 
-class KiteArticle extends StatelessWidget {
+class KiteArticle extends StatefulWidget {
   final Article article;
 
   const KiteArticle({super.key, required this.article});
 
   @override
+  State<KiteArticle> createState() => _KiteArticleState();
+}
+
+class _KiteArticleState extends State<KiteArticle> {
+  bool _isImage1Loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.article.image1 != null) {
+      final image = NetworkImage(widget.article.image1!.url.toString());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadImage1(image));
+    } else {
+      _isImage1Loading = false;
+    }
+  }
+
+  Future<void> _loadImage1(ImageProvider image) async {
+    await precacheImage(image, context);
+    setState(() {
+      _isImage1Loading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return KiteScaffold(
-      title: article.headline.title,
-      body: Center(child: Text(article.summary)),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            AnimatedOpacity(
+              opacity: _isImage1Loading ? 0.0 : 1.0,
+              duration: Durations.medium1,
+              child: ListView(
+                padding: EdgeInsets.all(16),
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          color: colorFromText(widget.article.headline.category),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.article.headline.title,
+                                style: TextStyle(fontSize: 24),
+                              ),
+                              Text(
+                                widget.article.headline.category,
+                                style: TextStyle(
+                                  color: colorFromText(
+                                    widget.article.headline.category,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(widget.article.summary, style: TextStyle(fontSize: 16)),
+                  if (widget.article.image1 != null) ...[
+                    SizedBox(height: 16),
+                    Image.network(widget.article.image1!.url.toString()),
+                    Text(widget.article.image1!.caption ?? ''),
+                  ],
+                  if (widget.article.talkingPoints.isNotEmpty) ...[
+                    SizedBox(height: 16),
+        
+                    TalkingPointsWidget(
+                      talkingPoints: widget.article.talkingPoints,
+                    ),
+                  ],
+                  if (widget.article.image2 != null) ...[
+                    SizedBox(height: 16),
+                    Image.network(widget.article.image2!.url.toString()),
+                    Text(widget.article.image2!.caption ?? ''),
+                  ],
+                ],
+              ),
+            ),
+            if (_isImage1Loading) Center(child: CircularProgressIndicator()),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TalkingPointsWidget extends StatelessWidget {
+  final List<TalkingPoint> talkingPoints;
+
+  TalkingPointsWidget({required this.talkingPoints});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Highlights', style: TextStyle(fontSize: 24)),
+        for (final talkingPoint in talkingPoints) ...[
+          SizedBox(height: 16),
+          Text(
+            talkingPoint.heading,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Text(talkingPoint.body, style: TextStyle(fontSize: 16)),
+        ],
+      ],
     );
   }
 }

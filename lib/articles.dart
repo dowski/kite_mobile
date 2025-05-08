@@ -137,6 +137,6 @@ final class TalkingPoint {
     if (heading == null || body == null) {
       return null;
     }
-    return TalkingPoint(heading: heading, body: body);
+    return TalkingPoint(heading: heading, body: body.trim());
   }
 }

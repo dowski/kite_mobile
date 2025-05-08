@@ -37,6 +37,8 @@ void main() {
       // Unique properties.
       expect(article?.talkingPoints.map((point) => point.heading).toSet(), hasLength(5));
       expect(article?.talkingPoints.map((point) => point.body).toSet(), hasLength(5));
+      // No blank leading characters.
+      expect(article?.talkingPoints.every((point) => point.body.startsWith(' ')), isFalse);
     });
   });
 }
