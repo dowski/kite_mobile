@@ -6,6 +6,7 @@ import 'package:kite_mobile/colors.dart';
 import 'package:kite_mobile/models.dart';
 import 'package:multiple_result/multiple_result.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   final api = KiteApi();
@@ -347,7 +348,7 @@ class ExternalArticlesWidget extends StatelessWidget {
           ListTile(
             title: Text(article.title),
             subtitle: Text(article.domain),
-            onTap: () => {},)
+            onTap: () => launchUrl(article.link),)
         ],
       ],
     );
