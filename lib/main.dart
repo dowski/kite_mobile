@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kite_mobile/api.dart';
 import 'package:kite_mobile/categories.dart';
+import 'package:kite_mobile/colors.dart';
 import 'package:kite_mobile/models.dart';
 import 'package:multiple_result/multiple_result.dart';
 import 'package:provider/provider.dart';
@@ -72,7 +73,8 @@ class KiteMaterialApp extends StatelessWidget {
       ),
       home: home,
       routes: {
-        '/article': (context) => Scaffold(body: Center(child: Text('Coming soon.'))),
+        '/article':
+            (context) => Scaffold(body: Center(child: Text('Coming soon.'))),
       },
     );
   }
@@ -156,7 +158,17 @@ class _ArticleListState extends State<ArticleList> {
         itemBuilder: (context, index) {
           final article = articles[index];
           final navigator = Navigator.of(context);
-          return ListTile(title: Text(article.title), subtitle: Text(article.category), onTap: () => navigator.pushNamed('/article'));
+          return ListTile(
+            title: Text(article.title),
+            contentPadding: EdgeInsets.all(4),
+            horizontalTitleGap: 0,
+            leading: Container(width: 8, color: colorFromText(article.category), padding: EdgeInsets.zero,),
+            subtitle: Text(
+              article.category,
+              style: TextStyle(color: colorFromText(article.category)),
+            ),
+            onTap: () => navigator.pushNamed('/article'),
+          );
         },
       );
     } else {
