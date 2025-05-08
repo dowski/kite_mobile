@@ -208,6 +208,7 @@ class KiteArticle extends StatefulWidget {
 
 class _KiteArticleState extends State<KiteArticle> {
   bool _isImage1Loading = true;
+  final _externalArticleKey = PageStorageKey('externalArticles');
 
   @override
   void initState() {
@@ -288,6 +289,14 @@ class _KiteArticleState extends State<KiteArticle> {
                     Image.network(widget.article.image2!.url.toString()),
                     Text(widget.article.image2!.caption ?? ''),
                   ],
+                  if (widget.article.externalArticles.isNotEmpty) ...[
+                    SizedBox(height: 16),
+        
+                    ExternalArticlesWidget(
+                      key: _externalArticleKey,
+                      articles: widget.article.externalArticles,
+                    )
+                  ],
                 ],
               ),
             ),
@@ -317,6 +326,28 @@ class TalkingPointsWidget extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           Text(talkingPoint.body, style: TextStyle(fontSize: 16)),
+        ],
+      ],
+    );
+  }
+}
+
+class ExternalArticlesWidget extends StatelessWidget {
+  final List<ExternalArticle> articles;
+
+  ExternalArticlesWidget({super.key, required this.articles});
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      title: Text('Sources', style: TextStyle(fontSize: 24)),
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final article in articles) ...[
+          ListTile(
+            title: Text(article.title),
+            subtitle: Text(article.domain),
+            onTap: () => {},)
         ],
       ],
     );
