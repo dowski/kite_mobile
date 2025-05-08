@@ -15,13 +15,17 @@ class KiteApi {
   KiteApi({http.Client? client}) : _client = client ?? http.Client();
 
   Future<Result<Map<String, dynamic>, Exception>> _rawFetch(Uri url) async {
-    final response = await _client.get(url);
+    try {
+      final response = await _client.get(url);
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return Success(json);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return Success(json);
+      }
+      return Error(Exception(response.body));
+    } on Exception catch (e) {
+      return Error(e);
     }
-    return Error(Exception(response.body));
   }
 
   Future<Result<List<Category>, Exception>> loadCategories() async {
@@ -52,19 +56,27 @@ class KiteApi {
     ArticleCategory category,
   ) async {
     final result = await _rawFetch(Uri.https(_host, category.file));
-    return result.mapSuccess((articlesJson) => (articlesJson['clusters'] as List<dynamic>)
-        .map((item) => item as Map<String, dynamic>)
-        .map(Article.fromJson)
-        .nonNulls
-        .toList());
+    return result.mapSuccess(
+      (articlesJson) =>
+          (articlesJson['clusters'] as List<dynamic>)
+              .map((item) => item as Map<String, dynamic>)
+              .map(Article.fromJson)
+              .nonNulls
+              .toList(),
+    );
   }
 
-  Future<Result<List<HistoricalNote>, Exception>> loadOnThisDay(OnThisDayCategory category) async {
+  Future<Result<List<HistoricalNote>, Exception>> loadOnThisDay(
+    OnThisDayCategory category,
+  ) async {
     final result = await _rawFetch(Uri.https(_host, category.file));
-    return result.mapSuccess((historyJson) => (historyJson['events'] as List<dynamic>)
-        .map((item) => item as Map<String, dynamic>)
-        .map(HistoricalNote.fromJson)
-        .nonNulls
-        .toList());
+    return result.mapSuccess(
+      (historyJson) =>
+          (historyJson['events'] as List<dynamic>)
+              .map((item) => item as Map<String, dynamic>)
+              .map(HistoricalNote.fromJson)
+              .nonNulls
+              .toList(),
+    );
   }
 }

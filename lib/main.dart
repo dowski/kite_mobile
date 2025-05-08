@@ -53,7 +53,6 @@ class _KiteDispatcherState extends State<KiteDispatcher> {
     return switch (categories.list) {
       Success(success: final categoryList) => DefaultTabController(
         length: categoryList.length,
-
         child: KiteMaterialApp(home: KiteHost(categories: categoryList)),
       ),
       Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed()),
@@ -358,7 +357,15 @@ class ExternalArticlesWidget extends StatelessWidget {
 class KiteLoadFailed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //TODO(dowski): support reloading on error
-    return KiteScaffold(body: Center(child: Text('Error loading')));
+    return KiteScaffold(body: Center(child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Error loading'),
+        IconButton.filled(onPressed: () {
+          context.read<CategoryListModel>().retry();
+        }, icon: Icon(Icons.refresh)),
+        Text('Check your internet connection and try again')
+      ],
+    )));
   }
 }

@@ -20,6 +20,11 @@ final class CategoryListModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void retry() {
+    _categories = null;
+    fetch();
+  }
+
   void setActiveCategory(Category category) {
     _activeCategory = category;
     notifyListeners();
