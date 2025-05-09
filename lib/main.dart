@@ -98,7 +98,12 @@ class KiteScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Row(
+          children: [
+            Image.asset('assets/icon/kite.png', width: 32, height: 32),
+            Text(title),
+          ],
+        ),
         bottom: tabBar,
       ),
       body: body,
