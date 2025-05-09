@@ -14,13 +14,13 @@ sealed class HistoricalNote {
       return HistoricPerson(
         year: json['year'],
         content: json['content'],
-        sortYear: json['sort_year'],
+        sortYear: (json['sort_year'] as num).toDouble(),
       );
     } else if (json['type'] == 'event') {
       return HistoricEvent(
         year: json['year'],
         content: json['content'],
-        sortYear: json['sort_year'],
+        sortYear: (json['sort_year'] as num).toDouble(),
       );
     }
     return null;

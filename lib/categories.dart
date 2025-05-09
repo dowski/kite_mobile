@@ -17,6 +17,8 @@ sealed class Category {
   final String name;
   final String file;
 
+  String get displayName;
+
   const Category({required this.name, required this.file});
 
   factory Category.fromJson(Map<String, dynamic> json) {
@@ -40,8 +42,14 @@ sealed class Category {
 
 final class ArticleCategory extends Category {
   const ArticleCategory({required super.name, required super.file});
+  
+  @override
+  String get displayName => name;
 }
 
 final class OnThisDayCategory extends Category {
   const OnThisDayCategory({required super.name, required super.file});
+  
+  @override
+  String get displayName => 'Today in History';
 }

@@ -1,11 +1,11 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:kite_mobile/api.dart';
 import 'package:kite_mobile/articles.dart';
 import 'package:kite_mobile/categories.dart';
 import 'package:kite_mobile/colors.dart';
 import 'package:kite_mobile/models.dart';
+import 'package:kite_mobile/thisday.dart';
 import 'package:multiple_result/multiple_result.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,6 +28,7 @@ class KiteApp extends StatelessWidget {
           create: (context) => CategoryListModel(api: api),
         ),
         ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
+        ChangeNotifierProvider(create: (context) => OnThisDayModel(api: api)),
       ],
       child: KiteDispatcher(),
     );
@@ -114,7 +115,7 @@ class KiteHost extends StatelessWidget {
   Widget build(BuildContext context) {
     return KiteScaffold(
       tabBar: TabBar(
-        tabs: categories.map((category) => Tab(text: category.name)).toList(),
+        tabs: categories.map((category) => Tab(text: category.displayName)).toList(),
         isScrollable: true,
         labelPadding: EdgeInsets.only(left: 8, right: 8),
         onTap:
@@ -127,7 +128,7 @@ class KiteHost extends StatelessWidget {
           for (final category in categories)
             switch (category) {
               ArticleCategory() => ArticleList(category: category),
-              OnThisDayCategory() => Center(child: Text('Coming soon.')),
+              OnThisDayCategory() => OnThisDay(category),
             },
         ],
       ),
@@ -149,7 +150,6 @@ class _ArticleListState extends State<ArticleList> {
   void initState() {
     super.initState();
     final model = context.read<ArticlesModel>();
-    debugPrint('trigger fetch');
     model.fetch(widget.category);
   }
 
@@ -157,7 +157,6 @@ class _ArticleListState extends State<ArticleList> {
   Widget build(BuildContext context) {
     final model = context.watch<ArticlesModel>();
     final result = model.headlines(widget.category);
-    debugPrint('build');
     if (result == null) {
       return Center(child: CircularProgressIndicator());
     }
@@ -383,6 +382,116 @@ class ExternalArticlesWidget extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class OnThisDay extends StatefulWidget {
+  final OnThisDayCategory category;
+
+  const OnThisDay(this.category);
+
+  @override
+  State<OnThisDay> createState() => _OnThisDayState();
+}
+
+class _OnThisDayState extends State<OnThisDay> {
+  @override
+  void initState() {
+    super.initState();
+    final model = context.read<OnThisDayModel>();
+    model.fetch(widget.category);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final model = context.watch<OnThisDayModel>();
+    final result = model.history;
+    return switch (result) {
+      Success(success: final history) => ListView.builder(
+        itemCount: history.length,
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        itemBuilder: (context, index) {
+          final note = history[index];
+          return OnThisDayEvent(historicalNote: note);
+        },
+      ),
+      Error(error: final error) => RefreshOnError(error),
+      null => Center(child: CircularProgressIndicator()),
+    };
+  }
+}
+
+enum OnThisDayEventDecoration { first, normal, last }
+
+class OnThisDayEvent extends StatelessWidget {
+  final HistoricalNote historicalNote;
+  final OnThisDayEventDecoration decoration;
+
+  const OnThisDayEvent({
+    super.key,
+    required this.historicalNote,
+    this.decoration = OnThisDayEventDecoration.normal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          SizedBox(
+            width: 84,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 6,
+                  right: 0,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Text(
+                      historicalNote.year,
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 14,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(90),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  width: 4,
+                  left: 6,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Html(
+              data: historicalNote.content,
+              onAnchorTap: (url, attributes, element) {
+                if (url != null) launchUrl(Uri.parse(url));
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
