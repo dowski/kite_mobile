@@ -26,6 +26,16 @@ sealed class Category {
       return ArticleCategory(name: json['name'], file: json['file']);
     }
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Category && other.name == name && other.file == file;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(name, file);
+  }
 }
 
 final class ArticleCategory extends Category {

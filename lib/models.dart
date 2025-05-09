@@ -6,18 +6,24 @@ import 'package:multiple_result/multiple_result.dart';
 
 final class CategoryListModel extends ChangeNotifier {
   final KiteApi _api;
-  Result<List<Category>, Exception>? _categories;
+  Result<List<Category>, ExceptionWithRetry>? _categories;
   Category? _activeCategory;
 
   CategoryListModel({required KiteApi api}) : _api = api;
 
   Category? get active => _activeCategory;
-  Result<List<Category>, Exception> get list =>
+  Result<List<Category>, ExceptionWithRetry> get list =>
       _categories ?? const Success([]);
 
   Future<void> fetch() async {
     if (_categories != null) return;
-    _categories = await _api.loadCategories();
+    final result = await _api.loadCategories();
+    _categories = result.mapError(
+      (error) => ExceptionWithRetry(error, () async {
+        _reset();
+        await fetch();
+      }),
+    );
     notifyListeners();
   }
 
@@ -34,29 +40,41 @@ final class CategoryListModel extends ChangeNotifier {
 
 final class ArticlesModel extends ChangeNotifier {
   final KiteApi _api;
-  final Map<ArticleCategory, List<ArticleHeadline>> _headlines = {};
+  final Map<ArticleCategory, Result<List<ArticleHeadline>, ExceptionWithRetry>> _headlines = {};
   final Map<ArticleHeadline, Article> _articles = {};
   Article? selectedArticle;
 
   ArticlesModel({required KiteApi api}) : _api = api;
 
   Future<void> fetch(ArticleCategory category) async {
-    if (_headlines.containsKey(category)) {
+    if (_headlines[category] is Success) {
+      debugPrint('already fetched ${category.name}');
       return;
     }
     final result = await _api.loadArticles(category);
-    result.mapSuccess((articles) {
-      _headlines[category] =
-          articles.map((article) => article.headline).toList();
-      _articles.addEntries(
-        articles.map((article) => MapEntry(article.headline, article)),
-      );
-      notifyListeners();
-    });
+    debugPrint('fetched');
+    _headlines[category] = result.map(
+      successMapper: (articles) {
+        articles.map((article) => article.headline).toList();
+        _articles.addEntries(
+          articles.map((article) => MapEntry(article.headline, article)),
+        );
+        return articles.map((article) => article.headline).toList();
+      },
+      errorMapper: (error) {
+        return ExceptionWithRetry(error, () async {
+          _reset();
+          await fetch(category);
+        });
+      },
+    );
+    debugPrint('notifying');
+    notifyListeners();
   }
 
-  List<ArticleHeadline>? headlines(ArticleCategory category) =>
-      _headlines[category];
+  Result<List<ArticleHeadline>, ExceptionWithRetry>? headlines(
+    ArticleCategory category,
+  ) => _headlines[category];
 
   void selectArticle(ArticleHeadline headline) {
     selectedArticle = _articles[headline];
@@ -71,19 +89,9 @@ final class ArticlesModel extends ChangeNotifier {
   }
 }
 
-final class AllModels {
-  final CategoryListModel categoryListModel;
-  final ArticlesModel articlesModel;
+class ExceptionWithRetry implements Exception {
+  final Future<void> Function() retry;
+  final Exception exception;
 
-  AllModels({required this.categoryListModel, required this.articlesModel});
-
-  Future<void> reload() async {
-    categoryListModel._reset();
-    articlesModel._reset();
-    await categoryListModel.fetch();
-    final activeCategory = categoryListModel.active;
-    if (activeCategory case ArticleCategory()) {
-      await articlesModel.fetch(activeCategory);
-    }
-  }
+  ExceptionWithRetry(this.exception, this.retry);
 }

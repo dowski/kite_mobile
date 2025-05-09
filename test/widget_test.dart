@@ -122,7 +122,7 @@ void main() {
     });
   });
 
-  group('Failed API request', () {
+  group('Failed category list load request', () {
     var requestCount = 0;
     late MockClient initiallyFailingClient;
 
@@ -160,15 +160,53 @@ void main() {
       expect(find.text('OnThisDay'), findsOneWidget);
     });
   });
-}
 
-final visibleWidgets = find.byWidgetPredicate((widget) {
-  // Check ancestors for zero opacity
-  if (widget is AnimatedOpacity && widget.opacity == 0.0) {
-    return false;
-  }
-  return true;
-});
+  group('Failed article list load request', () {
+    var requestCount = 0;
+    late MockClient initiallyFailingClient;
+
+    setUp(() {
+      requestCount = 0;
+      // A client that fails on the first article list request.
+      initiallyFailingClient = MockClient((request) async {
+        if (request.url.path == '/world.json') {
+          requestCount++;
+          if (requestCount == 1) {
+            return Response('', 404);
+          }
+        }
+        return limitedClientHandler(request);
+      });
+    });
+
+    testWidgets('shows error screen', (WidgetTester tester) async {
+      final api = KiteApi(client: initiallyFailingClient);
+      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpAndSettle();
+      // TabBar should show but no article list.
+      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.text('World'), findsOneWidget);
+      expect(find.text('Error loading'), findsOneWidget);
+      expect(
+        find.text('India-Pakistan military tensions escalate after strikes'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('can reload', (WidgetTester tester) async {
+      final api = KiteApi(client: initiallyFailingClient);
+      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pumpAndSettle();
+      // Upon reload, headlines load.
+      expect(
+        find.text('India-Pakistan military tensions escalate after strikes'),
+        findsOneWidget,
+      );
+    });
+  });
+}
 
 Future<Response> limitedClientHandler(Request request) async {
   switch (request.url) {

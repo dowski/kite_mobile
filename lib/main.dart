@@ -28,13 +28,6 @@ class KiteApp extends StatelessWidget {
           create: (context) => CategoryListModel(api: api),
         ),
         ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
-        ProxyProvider2<CategoryListModel, ArticlesModel, AllModels>(
-          update:
-              (context, categoryListModel, articlesModel, _) => AllModels(
-                categoryListModel: categoryListModel,
-                articlesModel: articlesModel,
-              ),
-        ),
       ],
       child: KiteDispatcher(),
     );
@@ -64,7 +57,7 @@ class _KiteDispatcherState extends State<KiteDispatcher> {
         length: categoryList.length,
         child: KiteMaterialApp(home: KiteHost(categories: categoryList)),
       ),
-      Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed()),
+      Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed(error)),
     };
   }
 }
@@ -156,43 +149,51 @@ class _ArticleListState extends State<ArticleList> {
   void initState() {
     super.initState();
     final model = context.read<ArticlesModel>();
+    debugPrint('trigger fetch');
     model.fetch(widget.category);
   }
 
   @override
   Widget build(BuildContext context) {
     final model = context.watch<ArticlesModel>();
-    final articles = model.headlines(widget.category);
-    if (articles == null) {
+    final result = model.headlines(widget.category);
+    debugPrint('build');
+    if (result == null) {
       return Center(child: CircularProgressIndicator());
-    } else if (articles.isNotEmpty) {
-      return ListView.builder(
-        itemCount: articles.length,
-        itemBuilder: (context, index) {
-          final headline = articles[index];
-          final navigator = Navigator.of(context);
-          return ListTile(
-            title: Text(headline.title),
-            contentPadding: EdgeInsets.all(4),
-            horizontalTitleGap: 0,
-            leading: Container(
-              width: 8,
-              color: colorFromText(headline.category),
-              padding: EdgeInsets.zero,
-            ),
-            subtitle: Text(
-              headline.category,
-              style: TextStyle(color: colorFromText(headline.category)),
-            ),
-            onTap: () {
-              model.selectArticle(headline);
-              navigator.pushNamed('/article');
+    }
+    switch (result) {
+      case Success(success: final articles):
+        if (articles.isNotEmpty) {
+          return ListView.builder(
+            itemCount: articles.length,
+            itemBuilder: (context, index) {
+              final headline = articles[index];
+              final navigator = Navigator.of(context);
+              return ListTile(
+                title: Text(headline.title),
+                contentPadding: EdgeInsets.all(4),
+                horizontalTitleGap: 0,
+                leading: Container(
+                  width: 8,
+                  color: colorFromText(headline.category),
+                  padding: EdgeInsets.zero,
+                ),
+                subtitle: Text(
+                  headline.category,
+                  style: TextStyle(color: colorFromText(headline.category)),
+                ),
+                onTap: () {
+                  model.selectArticle(headline);
+                  navigator.pushNamed('/article');
+                },
+              );
             },
           );
-        },
-      );
-    } else {
-      return Center(child: Text('No articles.'));
+        } else {
+          return Center(child: Text('No articles.'));
+        }
+      case Error(error: final error):
+        return RefreshOnError(error);
     }
   }
 }
@@ -387,23 +388,31 @@ class ExternalArticlesWidget extends StatelessWidget {
 }
 
 class KiteLoadFailed extends StatelessWidget {
+  final ExceptionWithRetry error;
+
+  const KiteLoadFailed(this.error);
+
   @override
   Widget build(BuildContext context) {
-    return KiteScaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error loading'),
-            IconButton.filled(
-              onPressed: () {
-                context.read<AllModels>().reload();
-              },
-              icon: Icon(Icons.refresh),
-            ),
-            Text('Check your internet connection and try again'),
-          ],
-        ),
+    return KiteScaffold(body: RefreshOnError(error));
+  }
+}
+
+class RefreshOnError extends StatelessWidget {
+  final ExceptionWithRetry error;
+
+  const RefreshOnError(this.error);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Error loading'),
+          IconButton.filled(onPressed: error.retry, icon: Icon(Icons.refresh)),
+          Text('Check your internet connection and try again'),
+        ],
       ),
     );
   }
