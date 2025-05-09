@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:kite_mobile/api.dart';
 import 'package:kite_mobile/articles.dart';
@@ -26,6 +28,13 @@ class KiteApp extends StatelessWidget {
           create: (context) => CategoryListModel(api: api),
         ),
         ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
+        ProxyProvider2<CategoryListModel, ArticlesModel, AllModels>(
+          update:
+              (context, categoryListModel, articlesModel, _) => AllModels(
+                categoryListModel: categoryListModel,
+                articlesModel: articlesModel,
+              ),
+        ),
       ],
       child: KiteDispatcher(),
     );
@@ -388,7 +397,7 @@ class KiteLoadFailed extends StatelessWidget {
             Text('Error loading'),
             IconButton.filled(
               onPressed: () {
-                context.read<CategoryListModel>().retry();
+                context.read<AllModels>().reload();
               },
               icon: Icon(Icons.refresh),
             ),

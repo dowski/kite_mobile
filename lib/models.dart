@@ -9,10 +9,11 @@ final class CategoryListModel extends ChangeNotifier {
   Result<List<Category>, Exception>? _categories;
   Category? _activeCategory;
 
-  CategoryListModel({required KiteApi api}): _api = api;
+  CategoryListModel({required KiteApi api}) : _api = api;
 
   Category? get active => _activeCategory;
-  Result<List<Category>, Exception> get list => _categories ?? const Success([]);
+  Result<List<Category>, Exception> get list =>
+      _categories ?? const Success([]);
 
   Future<void> fetch() async {
     if (_categories != null) return;
@@ -20,9 +21,9 @@ final class CategoryListModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void retry() {
+  void _reset() {
     _categories = null;
-    fetch();
+    notifyListeners();
   }
 
   void setActiveCategory(Category category) {
@@ -37,7 +38,7 @@ final class ArticlesModel extends ChangeNotifier {
   final Map<ArticleHeadline, Article> _articles = {};
   Article? selectedArticle;
 
-  ArticlesModel({required KiteApi api}): _api = api;
+  ArticlesModel({required KiteApi api}) : _api = api;
 
   Future<void> fetch(ArticleCategory category) async {
     if (_headlines.containsKey(category)) {
@@ -45,16 +46,44 @@ final class ArticlesModel extends ChangeNotifier {
     }
     final result = await _api.loadArticles(category);
     result.mapSuccess((articles) {
-      _headlines[category] = articles.map((article) => article.headline).toList();
-      _articles.addEntries(articles.map((article) => MapEntry(article.headline, article)));
+      _headlines[category] =
+          articles.map((article) => article.headline).toList();
+      _articles.addEntries(
+        articles.map((article) => MapEntry(article.headline, article)),
+      );
       notifyListeners();
     });
   }
 
-  List<ArticleHeadline>? headlines(ArticleCategory category) => _headlines[category];
+  List<ArticleHeadline>? headlines(ArticleCategory category) =>
+      _headlines[category];
 
   void selectArticle(ArticleHeadline headline) {
     selectedArticle = _articles[headline];
     notifyListeners();
+  }
+
+  void _reset() {
+    selectedArticle = null;
+    _headlines.clear();
+    _articles.clear();
+    notifyListeners();
+  }
+}
+
+final class AllModels {
+  final CategoryListModel categoryListModel;
+  final ArticlesModel articlesModel;
+
+  AllModels({required this.categoryListModel, required this.articlesModel});
+
+  Future<void> reload() async {
+    categoryListModel._reset();
+    articlesModel._reset();
+    await categoryListModel.fetch();
+    final activeCategory = categoryListModel.active;
+    if (activeCategory case ArticleCategory()) {
+      await articlesModel.fetch(activeCategory);
+    }
   }
 }

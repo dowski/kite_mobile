@@ -121,6 +121,45 @@ void main() {
       );
     });
   });
+
+  group('Failed API request', () {
+    var requestCount = 0;
+    late MockClient initiallyFailingClient;
+
+    setUp(() {
+      requestCount = 0;
+      // A client that fails on the first request.
+      initiallyFailingClient = MockClient((request) async {
+        requestCount++;
+        if (requestCount == 1) {
+          return Response('', 404);
+        }
+        return limitedClientHandler(request);
+      });
+    });
+
+    testWidgets('shows error screen', (WidgetTester tester) async {
+      final api = KiteApi(client: initiallyFailingClient);
+      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpAndSettle();
+      expect(find.byType(TabBar), findsNothing);
+      expect(find.text('Error loading'), findsOneWidget);
+    });
+
+    testWidgets('can reload', (WidgetTester tester) async {
+      final api = KiteApi(client: initiallyFailingClient);
+      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pumpAndSettle();
+      expect(find.text('Error loading'), findsNothing);
+      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.text('World'), findsOneWidget);
+      expect(find.text('Business'), findsOneWidget);
+      expect(find.text('Foo'), findsNothing);
+      expect(find.text('OnThisDay'), findsOneWidget);
+    });
+  });
 }
 
 final visibleWidgets = find.byWidgetPredicate((widget) {
@@ -131,7 +170,7 @@ final visibleWidgets = find.byWidgetPredicate((widget) {
   return true;
 });
 
-final limitedClient = MockClient((request) async {
+Future<Response> limitedClientHandler(Request request) async {
   switch (request.url) {
     case Uri(host: 'kite.kagi.com', path: '/kite.json'):
       return Response.bytes(
@@ -162,7 +201,9 @@ final limitedClient = MockClient((request) async {
     default:
       return Response('', 404);
   }
-});
+}
+
+final limitedClient = MockClient(limitedClientHandler);
 
 const limitedJsonPayload = r'''
 {
