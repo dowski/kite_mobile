@@ -34,7 +34,7 @@ void main() {
       expect(find.text('World'), findsOneWidget);
       expect(find.text('Business'), findsOneWidget);
       expect(find.text('Foo'), findsNothing);
-      expect(find.text('OnThisDay'), findsOneWidget);
+      expect(find.text('Today in History'), findsOneWidget);
     });
 
     testWidgets('renders headlines', (WidgetTester tester) async {
@@ -75,19 +75,15 @@ void main() {
       final api = KiteApi(client: limitedClient);
       await tester.pumpWidget(KiteApp(api: api));
       await tester.pumpAndSettle();
-      await tester.runAsync(() async {
-        await mockNetworkImages(() async {
-          await tester.tap(
-            find.text(
-              'India-Pakistan military tensions escalate after strikes',
-            ),
-          );
-        });
+      await mockNetworkImages(() async {
+        await tester.tap(
+          find.text('India-Pakistan military tensions escalate after strikes'),
+        );
       });
       await tester.pumpAndSettle();
       expect(find.byType(KiteArticle), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(Image), findsNWidgets(2));
       expect(
         find.text(
           'India launched missile strikes on what it described as "terrorist infrastructure" in Pakistan and Pakistan-administered Kashmir early on May 7, 2025, in response to a deadly attack on tourists in Kashmir last month. Pakistan condemned the strikes as "an act of war," claimed 26 civilians were killed, and said it had shot down five Indian fighter jets in retaliation. The confrontation marks the most serious military escalation between the nuclear-armed neighbors in over two decades.',
@@ -102,11 +98,9 @@ void main() {
       final api = KiteApi(client: limitedClient);
       await tester.pumpWidget(KiteApp(api: api));
       await tester.pumpAndSettle();
-      await tester.runAsync(() async {
-        await tester.tap(
-          find.text('India-Pakistan military tensions escalate after strikes'),
-        );
-      });
+      await tester.tap(
+        find.text('India-Pakistan military tensions escalate after strikes'),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -157,7 +151,7 @@ void main() {
       expect(find.text('World'), findsOneWidget);
       expect(find.text('Business'), findsOneWidget);
       expect(find.text('Foo'), findsNothing);
-      expect(find.text('OnThisDay'), findsOneWidget);
+      expect(find.text('Today in History'), findsOneWidget);
     });
   });
 
