@@ -1,5 +1,6 @@
 import 'package:multiple_result/multiple_result.dart';
 
+// TODO: consider custom categories.
 const defaultCategoryNames = [
   "World",
   "Business",
@@ -13,6 +14,11 @@ abstract interface class Categories {
   Future<Result<List<Category>, Exception>> load();
 }
 
+/// Data for categories returned from the Kite API.
+/// 
+/// Two broad types are supported: articles and "on this day". The data
+/// received when fetching each type is different, and codifying that here
+/// makes it easier for consuming code to deal with [Category] data.
 sealed class Category {
   final String name;
   final String file;

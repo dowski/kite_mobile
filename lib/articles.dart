@@ -1,3 +1,6 @@
+/// A headline for an article shown in Kite.
+/// 
+/// Data typically comes from the Kite JSON backend.
 final class ArticleHeadline {
   final String title;
   final String category;
@@ -25,6 +28,10 @@ final class ArticleHeadline {
   }
 }
 
+/// A full article for Kite.
+/// 
+/// Data typically comes from the Kite JSON backend.
+// TODO: add more content to enrich the article viewing experience 
 final class Article {
   final ArticleHeadline headline;
   final String summary;
@@ -64,12 +71,14 @@ final class Article {
     );
   }
 
+  /// The first image to show for an article.
   ArticleImage? get image1 => ArticleImage.fromExternalOrNull(
     externalArticles
         .where((article) => article.image != null)
         .elementAtOrNull(0),
   );
   
+  /// The second image to show for an article.
   ArticleImage? get image2 => ArticleImage.fromExternalOrNull(
     externalArticles
         .where((article) => article.image != null)

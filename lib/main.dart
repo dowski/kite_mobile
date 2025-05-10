@@ -15,6 +15,9 @@ void main() {
   runApp(KiteApp(api: api));
 }
 
+/// This is the launcher widget for the app.
+///
+/// It wires up the dependencies using [Provider] and prepares the corr app.
 class KiteApp extends StatelessWidget {
   final KiteApi api;
 
@@ -30,19 +33,24 @@ class KiteApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
         ChangeNotifierProvider(create: (context) => OnThisDayModel(api: api)),
       ],
-      child: KiteDispatcher(),
+      child: KiteHost(),
     );
   }
 }
 
-class KiteDispatcher extends StatefulWidget {
-  const KiteDispatcher({super.key});
+/// The host widget for the app.
+///
+/// It kicks off data loading and then dispatches to either the [KiteCore]
+/// that handles all other use of the app or shows an error page in the
+/// case that data load failed.
+class KiteHost extends StatefulWidget {
+  const KiteHost({super.key});
 
   @override
-  State<KiteDispatcher> createState() => _KiteDispatcherState();
+  State<KiteHost> createState() => _KiteHostState();
 }
 
-class _KiteDispatcherState extends State<KiteDispatcher> {
+class _KiteHostState extends State<KiteHost> {
   @override
   void initState() {
     super.initState();
@@ -56,13 +64,14 @@ class _KiteDispatcherState extends State<KiteDispatcher> {
     return switch (categories.list) {
       Success(success: final categoryList) => DefaultTabController(
         length: categoryList.length,
-        child: KiteMaterialApp(home: KiteHost(categories: categoryList)),
+        child: KiteMaterialApp(home: KiteCore(categories: categoryList)),
       ),
       Error(error: final error) => KiteMaterialApp(home: KiteLoadFailed(error)),
     };
   }
 }
 
+/// A convenient wrapper around [MaterialApp] for Kite.
 class KiteMaterialApp extends StatelessWidget {
   final Widget home;
 
@@ -81,6 +90,7 @@ class KiteMaterialApp extends StatelessWidget {
   }
 }
 
+/// A convenient wrapper around [Scaffold] for Kite.
 class KiteScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? tabBar;
@@ -111,22 +121,28 @@ class KiteScaffold extends StatelessWidget {
   }
 }
 
-class KiteHost extends StatelessWidget {
+/// The core Kite widget.
+///
+/// Renders the main app UI including the [TabBar] and the views associated
+/// with each tab.
+class KiteCore extends StatelessWidget {
   final List<Category> categories;
 
-  const KiteHost({super.key, required this.categories});
+  const KiteCore({super.key, required this.categories});
 
   @override
   Widget build(BuildContext context) {
     return KiteScaffold(
       tabBar: TabBar(
-        tabs: categories.map((category) => Tab(text: category.displayName)).toList(),
+        tabs:
+            categories
+                .map((category) => Tab(text: category.displayName))
+                .toList(),
         isScrollable: true,
         labelPadding: EdgeInsets.only(left: 8, right: 8),
         onTap:
-            (value) => context.read<CategoryListModel>().setActiveCategory(
-              categories[value],
-            ),
+            (value) =>
+                context.read<CategoryListModel>().active = categories[value],
       ),
       body: TabBarView(
         children: [
@@ -141,6 +157,7 @@ class KiteHost extends StatelessWidget {
   }
 }
 
+/// A list of articles loaded from the [KiteApi].
 class ArticleList extends StatefulWidget {
   final ArticleCategory category;
 
@@ -202,7 +219,12 @@ class _ArticleListState extends State<ArticleList> {
   }
 }
 
+/// A host widget for [KiteArticle].
+///
+/// Rebuilds when a selected article changes.
 class KiteArticleHost extends StatelessWidget {
+  const KiteArticleHost({super.key});
+
   @override
   Widget build(BuildContext context) {
     final model = context.watch<ArticlesModel>();
@@ -211,6 +233,11 @@ class KiteArticleHost extends StatelessWidget {
   }
 }
 
+/// A widget that renders a full article for Kite.
+///
+/// Handles a loading state while the first image is fetched. That prevents
+/// the content "jumping" if the widget rendered the rest of its contents first.
+//NOTE: if the Kite API returned image dimensions, the initial spinner could be avoided.
 class KiteArticle extends StatefulWidget {
   final Article article;
 
@@ -344,6 +371,7 @@ class _KiteArticleState extends State<KiteArticle> {
   }
 }
 
+/// A supporting widget for [KiteArticle] that renders highlights.
 class TalkingPointsWidget extends StatelessWidget {
   final List<TalkingPoint> talkingPoints;
 
@@ -368,6 +396,7 @@ class TalkingPointsWidget extends StatelessWidget {
   }
 }
 
+/// A supporting widget for [KiteArticle] that renders external article links.
 class ExternalArticlesWidget extends StatelessWidget {
   final List<ExternalArticle> articles;
 
@@ -391,6 +420,7 @@ class ExternalArticlesWidget extends StatelessWidget {
   }
 }
 
+/// A widget that shows a list of historical events.
 class OnThisDay extends StatefulWidget {
   final OnThisDayCategory category;
 
@@ -427,17 +457,10 @@ class _OnThisDayState extends State<OnThisDay> {
   }
 }
 
-enum OnThisDayEventDecoration { first, normal, last }
-
 class OnThisDayEvent extends StatelessWidget {
   final HistoricalNote historicalNote;
-  final OnThisDayEventDecoration decoration;
 
-  const OnThisDayEvent({
-    super.key,
-    required this.historicalNote,
-    this.decoration = OnThisDayEventDecoration.normal,
-  });
+  const OnThisDayEvent({super.key, required this.historicalNote});
 
   @override
   Widget build(BuildContext context) {
@@ -512,6 +535,7 @@ class KiteLoadFailed extends StatelessWidget {
   }
 }
 
+/// A widget that shows a reload button for retrying after an error.
 class RefreshOnError extends StatelessWidget {
   final ExceptionWithRetry error;
 
