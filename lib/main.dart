@@ -445,13 +445,15 @@ class _OnThisDayState extends State<OnThisDay> {
     final model = context.watch<OnThisDayModel>();
     final result = model.history;
     return switch (result) {
-      Success(success: final history) => ListView.builder(
-        itemCount: history.length,
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        itemBuilder: (context, index) {
-          final note = history[index];
-          return OnThisDayEvent(historicalNote: note);
-        },
+      Success(success: final history) => SafeArea(
+        child: ListView.builder(
+          itemCount: history.length,
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          itemBuilder: (context, index) {
+            final note = history[index];
+            return OnThisDayEvent(historicalNote: note);
+          },
+        ),
       ),
       Error(error: final error) => RefreshOnError(error),
       null => Center(child: CircularProgressIndicator()),
