@@ -20,8 +20,13 @@ void main() {
 /// It wires up the dependencies using [Provider] and prepares the corr app.
 class KiteApp extends StatelessWidget {
   final KiteApi api;
+  final ImagePreloader imagePreloader;
 
-  const KiteApp({super.key, required this.api});
+  const KiteApp({
+    super.key,
+    required this.api,
+    this.imagePreloader = const FlutterImagePreloader(),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +37,7 @@ class KiteApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (context) => ArticlesModel(api: api)),
         ChangeNotifierProvider(create: (context) => OnThisDayModel(api: api)),
+        Provider.value(value: imagePreloader),
       ],
       child: KiteHost(),
     );
@@ -263,13 +269,9 @@ class _KiteArticleState extends State<KiteArticle> {
   }
 
   Future<void> _loadImage1(ImageProvider image) async {
-    await precacheImage(
-      image,
-      context,
-      onError: (exception, stackTrace) {
-        // Purposely empty - we don't do anything with preload errors.
-      },
-    );
+    if (!context.mounted) return;
+    final imagePreloader = context.read<ImagePreloader>();
+    await imagePreloader.precacheImage(context, image);
 
     setState(() {
       _isImage1Loading = false;

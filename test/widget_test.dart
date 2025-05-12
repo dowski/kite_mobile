@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,28 +8,42 @@ import 'package:kite_mobile/api.dart';
 import 'package:http/testing.dart';
 
 import 'package:kite_mobile/main.dart';
+import 'package:kite_mobile/testing/models.dart';
 import 'package:mocktail_image_network/mocktail_image_network.dart';
 
 void main() {
+  late KiteApp app;
+  late FakeImagePreloader imagePreloader;
+  setUp(() {
+    imagePreloader = FakeImagePreloader();
+
+    app = KiteApp(
+      api: KiteApi(client: limitedClient),
+      imagePreloader: imagePreloader,
+    );
+  });
+
+  tearDown(() {
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    HttpOverrides.global = null;
+  });
+
   group('Valid API responses', () {
-    setUp(() {});
     testWidgets('app launches', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(app);
       expect(find.text('Kite'), findsOneWidget);
     });
 
     testWidgets('does not show error', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.byType(KiteLoadFailed), findsNothing);
       expect(find.text('Error loading'), findsNothing);
     });
 
     testWidgets('renders categories', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.byType(TabBar), findsOneWidget);
       expect(find.text('World'), findsOneWidget);
@@ -38,8 +53,7 @@ void main() {
     });
 
     testWidgets('renders headlines', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(
         find.text('India-Pakistan military tensions escalate after strikes'),
@@ -51,17 +65,14 @@ void main() {
     testWidgets('shows loading spinner when opening article', (
       WidgetTester tester,
     ) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(mockNetworkImages(() => app));
       await tester.pumpAndSettle();
-      await mockNetworkImages(() async {
-        await tester.tap(
-          find.text('India-Pakistan military tensions escalate after strikes'),
-        );
-        // Pump twice - once for navigation and once for image load.
-        await tester.pump();
-        await tester.pump();
-      });
+      await tester.tap(
+        find.text('India-Pakistan military tensions escalate after strikes'),
+      );
+      // Pump twice - once for navigation and once for image preload trigger.
+      await tester.pump();
+      await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(
         find.text(
@@ -69,34 +80,34 @@ void main() {
         ),
         findsNothing,
       );
-    });
-
-    testWidgets('can open articles', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
       await tester.pumpAndSettle();
-      await mockNetworkImages(() async {
-        await tester.tap(
-          find.text('India-Pakistan military tensions escalate after strikes'),
-        );
-      });
-      await tester.pumpAndSettle();
-      expect(find.byType(KiteArticle), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.byType(Image), findsNWidgets(2));
-      expect(
-        find.text(
-          'India launched missile strikes on what it described as "terrorist infrastructure" in Pakistan and Pakistan-administered Kashmir early on May 7, 2025, in response to a deadly attack on tourists in Kashmir last month. Pakistan condemned the strikes as "an act of war," claimed 26 civilians were killed, and said it had shot down five Indian fighter jets in retaliation. The confrontation marks the most serious military escalation between the nuclear-armed neighbors in over two decades.',
-        ),
-        findsOneWidget,
-      );
     });
   });
 
+  testWidgets('can open articles', (WidgetTester tester) async {
+    await tester.pumpWidget(mockNetworkImages(() => app));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text('India-Pakistan military tensions escalate after strikes'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(KiteArticle), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(Image), findsNWidgets(2));
+    // No placeholders, which are shown when image loading fails.
+    expect(find.byType(Placeholder), findsNothing);
+    expect(
+      find.text(
+        'India launched missile strikes on what it described as "terrorist infrastructure" in Pakistan and Pakistan-administered Kashmir early on May 7, 2025, in response to a deadly attack on tourists in Kashmir last month. Pakistan condemned the strikes as "an act of war," claimed 26 civilians were killed, and said it had shot down five Indian fighter jets in retaliation. The confrontation marks the most serious military escalation between the nuclear-armed neighbors in over two decades.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   group('Image load failure', () {
+    //TODO: this test fails when run with others due to mockNetworkImages not resetting state
     testWidgets('can open articles', (WidgetTester tester) async {
-      final api = KiteApi(client: limitedClient);
-      await tester.pumpWidget(KiteApp(api: api));
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       await tester.tap(
         find.text('India-Pakistan military tensions escalate after strikes'),

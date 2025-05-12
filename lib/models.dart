@@ -155,3 +155,16 @@ class ExceptionWithRetry implements Exception {
 
   ExceptionWithRetry(this.exception, this.retry);
 }
+
+abstract interface class ImagePreloader {
+  Future<void> precacheImage(BuildContext context, ImageProvider image);
+}
+
+final class FlutterImagePreloader implements ImagePreloader {
+  const FlutterImagePreloader();
+
+  @override
+  Future<void> precacheImage(BuildContext context, ImageProvider image) async {
+    await precacheImage(context, image);
+  }
+}
