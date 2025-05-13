@@ -7,9 +7,9 @@ import 'package:kite_mobile/thisday.dart';
 import 'package:multiple_result/multiple_result.dart';
 
 /// An implementation of the Kite API.
-/// 
+///
 /// Call [loadCategories] to find out what data is available.
-/// 
+///
 /// Then call [loadArticles] and pass a category to retrieve available
 /// articles.
 class KiteApi {
@@ -35,10 +35,10 @@ class KiteApi {
   }
 
   /// Returns categories from the Kite backend.
-  /// 
+  ///
   /// Most categories are [ArticleCategory]. There is also support for
   /// [OnThisDayCategory], which powers the 'Today in History' feature.
-  /// 
+  ///
   /// The [Result] will be [Success] or [Error]. Calling code can react
   /// to that and do the right thing in either case (show content, show
   /// error message).
@@ -67,7 +67,7 @@ class KiteApi {
   }
 
   /// Returns a list of articles for an [ArticleCategory].
-  /// 
+  ///
   /// The [Result] will be [Success] or [Error]. Calling code can react
   /// to that and do the right thing in either case (show content, show
   /// error message).
@@ -86,7 +86,7 @@ class KiteApi {
   }
 
   /// Returns historical events for this day.
-  /// 
+  ///
   /// The [Result] will be [Success] or [Error]. Calling code can react
   /// to that and do the right thing in either case (show content, show
   /// error message).

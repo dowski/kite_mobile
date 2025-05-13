@@ -15,7 +15,7 @@ abstract interface class Categories {
 }
 
 /// Data for categories returned from the Kite API.
-/// 
+///
 /// Two broad types are supported: articles and "on this day". The data
 /// received when fetching each type is different, and codifying that here
 /// makes it easier for consuming code to deal with [Category] data.
@@ -48,14 +48,14 @@ sealed class Category {
 
 final class ArticleCategory extends Category {
   const ArticleCategory({required super.name, required super.file});
-  
+
   @override
   String get displayName => name;
 }
 
 final class OnThisDayCategory extends Category {
   const OnThisDayCategory({required super.name, required super.file});
-  
+
   @override
   String get displayName => 'Today in History';
 }

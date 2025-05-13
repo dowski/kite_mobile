@@ -7,7 +7,10 @@ final class FakeImagePreloader implements ImagePreloader {
   const FakeImagePreloader();
 
   @override
-  Future<void> precacheImage(BuildContext context, ImageProvider<Object> image) {
+  Future<void> precacheImage(
+    BuildContext context,
+    ImageProvider<Object> image,
+  ) {
     return Future.delayed(delay);
   }
 }

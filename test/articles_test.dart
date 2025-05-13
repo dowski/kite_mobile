@@ -8,11 +8,17 @@ void main() {
     late Article article;
 
     setUp(() {
-      article = Article.fromJson(jsonDecode(articleJsonString) as Map<String, dynamic>)!;
+      article =
+          Article.fromJson(
+            jsonDecode(articleJsonString) as Map<String, dynamic>,
+          )!;
     });
 
     test('has proper headline', () {
-      expect(article.headline.title, 'Inter Milan triumphs in historic Champions League semi-final');
+      expect(
+        article.headline.title,
+        'Inter Milan triumphs in historic Champions League semi-final',
+      );
       expect(article.headline.category, 'Football');
     });
 
@@ -21,14 +27,23 @@ void main() {
     });
 
     test('has proper summary', () {
-      expect(article.summary, 'Inter Milan has secured a place in the Champions League final after defeating Barcelona 4-3 in extra time (7-6 on aggregate) in an extraordinary semi-final match at San Siro. The thrilling contest featured remarkable comebacks from both sides, with substitute Davide Frattesi scoring the decisive goal in the 99th minute of extra time. This victory sends Inter to their second Champions League final in three years, where they will face either Arsenal or Paris Saint-Germain.');
+      expect(
+        article.summary,
+        'Inter Milan has secured a place in the Champions League final after defeating Barcelona 4-3 in extra time (7-6 on aggregate) in an extraordinary semi-final match at San Siro. The thrilling contest featured remarkable comebacks from both sides, with substitute Davide Frattesi scoring the decisive goal in the 99th minute of extra time. This victory sends Inter to their second Champions League final in three years, where they will face either Arsenal or Paris Saint-Germain.',
+      );
     });
 
     test('has proper external articles', () {
       expect(article.externalArticles, hasLength(7));
       // Unique properties.
-      expect(article.externalArticles.map((article) => article.title).toSet(), hasLength(7));
-      expect(article.externalArticles.map((article) => article.link).toSet(), hasLength(7));
+      expect(
+        article.externalArticles.map((article) => article.title).toSet(),
+        hasLength(7),
+      );
+      expect(
+        article.externalArticles.map((article) => article.link).toSet(),
+        hasLength(7),
+      );
     });
 
     test('has proper images', () {
@@ -40,10 +55,19 @@ void main() {
     test('has proper talking points', () {
       expect(article.talkingPoints, hasLength(5));
       // Unique properties.
-      expect(article.talkingPoints.map((point) => point.heading).toSet(), hasLength(5));
-      expect(article.talkingPoints.map((point) => point.body).toSet(), hasLength(5));
+      expect(
+        article.talkingPoints.map((point) => point.heading).toSet(),
+        hasLength(5),
+      );
+      expect(
+        article.talkingPoints.map((point) => point.body).toSet(),
+        hasLength(5),
+      );
       // No blank leading characters.
-      expect(article.talkingPoints.every((point) => point.body.startsWith(' ')), isFalse);
+      expect(
+        article.talkingPoints.every((point) => point.body.startsWith(' ')),
+        isFalse,
+      );
     });
   });
 
