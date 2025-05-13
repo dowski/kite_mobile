@@ -79,7 +79,6 @@ final class ArticlesModel extends ChangeNotifier {
     _headlines[category] = result.map(
       successMapper: (articles) {
         // Transform data into headlines and articles.
-        articles.map((article) => article.headline).toList();
         _articles.addEntries(
           articles.map((article) => MapEntry(article.headline, article)),
         );

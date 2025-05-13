@@ -94,7 +94,7 @@ final class ExternalArticle {
   final Uri? image;
   final String? imageCaption;
 
-  ExternalArticle({
+  const ExternalArticle({
     required this.title,
     required this.domain,
     required this.link,
