@@ -196,19 +196,9 @@ class _ArticleListState extends State<ArticleList> {
             itemBuilder: (context, index) {
               final headline = articles[index];
               final navigator = Navigator.of(context);
-              return ListTile(
-                title: Text(headline.title),
-                contentPadding: EdgeInsets.all(4),
-                horizontalTitleGap: 0,
-                leading: Container(
-                  width: 8,
-                  color: colorFromText(headline.category),
-                  padding: EdgeInsets.zero,
-                ),
-                subtitle: Text(
-                  headline.category,
-                  style: TextStyle(color: colorFromText(headline.category)),
-                ),
+              return ArticleHeader(
+                headline: headline,
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                 onTap: () {
                   model.selectArticle(headline);
                   navigator.pushNamed('/article');
@@ -293,38 +283,9 @@ class _KiteArticleState extends State<KiteArticle> {
                       : ListView(
                         padding: EdgeInsets.all(16),
                         children: [
-                          IntrinsicHeight(
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  color: colorFromText(
-                                    widget.article.headline.category,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.article.headline.title,
-                                        style: TextStyle(fontSize: 24),
-                                      ),
-                                      Text(
-                                        widget.article.headline.category,
-                                        style: TextStyle(
-                                          color: colorFromText(
-                                            widget.article.headline.category,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                          ArticleHeader(
+                            headline: widget.article.headline,
+                            titleStyle: TextStyle(fontSize: 24),
                           ),
                           SizedBox(height: 16),
                           Text(
@@ -367,6 +328,56 @@ class _KiteArticleState extends State<KiteArticle> {
             ),
             if (_isImage1Loading) Center(child: CircularProgressIndicator()),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Common header used in the article list and article view.
+class ArticleHeader extends StatelessWidget {
+  final ArticleHeadline headline;
+  final TextStyle? titleStyle;
+  final VoidCallback? onTap;
+  final EdgeInsets padding;
+
+  const ArticleHeader({
+    super.key,
+    required this.headline,
+    this.titleStyle,
+    this.onTap,
+    this.padding = EdgeInsets.zero,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Padding(
+        padding: padding,
+        child: Material(
+          child: InkWell(
+            onTap: onTap,
+            child: Row(
+              children: [
+                Container(width: 8, color: colorFromText(headline.category)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(headline.title, style: titleStyle),
+                      Text(
+                        headline.category,
+                        style: TextStyle(
+                          color: colorFromText(headline.category),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

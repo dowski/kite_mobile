@@ -16,3 +16,7 @@ Use `flutter run` to launch the app.
 
 There's a stronger focus on widget tests that exercise multiple parts of
 the app code together vs. unit tests (although there are some of those).
+
+## Future Enhancements
+ * UI to reload when new data becomes available
+ * More article content
