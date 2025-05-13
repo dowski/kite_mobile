@@ -388,7 +388,7 @@ class ArticleHeader extends StatelessWidget {
 class TalkingPointsWidget extends StatelessWidget {
   final List<TalkingPoint> talkingPoints;
 
-  TalkingPointsWidget({required this.talkingPoints});
+  const TalkingPointsWidget({super.key, required this.talkingPoints});
 
   @override
   Widget build(BuildContext context) {
@@ -413,7 +413,7 @@ class TalkingPointsWidget extends StatelessWidget {
 class ExternalArticlesWidget extends StatelessWidget {
   final List<ExternalArticle> articles;
 
-  ExternalArticlesWidget({super.key, required this.articles});
+  const ExternalArticlesWidget({super.key, required this.articles});
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +437,7 @@ class ExternalArticlesWidget extends StatelessWidget {
 class OnThisDay extends StatefulWidget {
   final OnThisDayCategory category;
 
-  const OnThisDay(this.category);
+  const OnThisDay(this.category, {super.key});
 
   @override
   State<OnThisDay> createState() => _OnThisDayState();
@@ -542,7 +542,7 @@ class OnThisDayEvent extends StatelessWidget {
 class KiteLoadFailed extends StatelessWidget {
   final ExceptionWithRetry error;
 
-  const KiteLoadFailed(this.error);
+  const KiteLoadFailed(this.error, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -554,7 +554,7 @@ class KiteLoadFailed extends StatelessWidget {
 class RefreshOnError extends StatelessWidget {
   final ExceptionWithRetry error;
 
-  const RefreshOnError(this.error);
+  const RefreshOnError(this.error, {super.key});
 
   @override
   Widget build(BuildContext context) {
