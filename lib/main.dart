@@ -100,7 +100,7 @@ class KiteMaterialApp extends StatelessWidget {
 class KiteScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? tabBar;
-  final String title;
+  final String? title;
 
   const KiteScaffold({
     super.key,
@@ -114,12 +114,12 @@ class KiteScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Row(
+        title: title != null ? Row(
           children: [
             Image.asset('assets/icon/kite.png', width: 32, height: 32),
-            Text(title),
+            Text(title!),
           ],
-        ),
+        ) : null,
         bottom: tabBar,
       ),
       body: body,
@@ -271,6 +271,7 @@ class _KiteArticleState extends State<KiteArticle> {
   @override
   Widget build(BuildContext context) {
     return KiteScaffold(
+      title: null,
       body: SafeArea(
         child: Stack(
           children: [
